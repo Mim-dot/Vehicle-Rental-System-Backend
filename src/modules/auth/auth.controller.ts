@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import { authService } from "./auth.service";
 
 const signupUser = async (req: Request, res: Response) => {
-  const { name, email, password, phone, role } = req.body;
-
   try {
+    let { name, email, password, phone, role } = req.body;
+
+    // Required fields
     if (!name || !email || !password || !phone) {
       return res.status(400).json({
         success: false,
@@ -12,6 +13,15 @@ const signupUser = async (req: Request, res: Response) => {
       });
     }
 
+    // Email lowercase check
+    if (/[A-Z]/.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Email must be lowercase only",
+      });
+    }
+
+    // Password length check
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
@@ -36,15 +46,14 @@ const signupUser = async (req: Request, res: Response) => {
     res.status(400).json({
       success: false,
       message: error.message || "Error registering user",
-      errors: error.message,
     });
   }
 };
 
 const loginUser = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
+
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -57,16 +66,12 @@ const loginUser = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Login successful",
-      data: {
-        token: result.token,
-        user: result.user,
-      },
+      data: result,
     });
   } catch (error: any) {
     res.status(401).json({
       success: false,
       message: error.message || "Error logging in user",
-      errors: error.message,
     });
   }
 };

@@ -10,6 +10,7 @@ const signupUser = async (
   phone: string,
   role: string = "customer"
 ) => {
+  // Check duplicate email
   const existingUser = await pool.query(
     "SELECT * FROM users WHERE email = $1",
     [email]
@@ -19,11 +20,13 @@ const signupUser = async (
     throw new Error("Email already registered");
   }
 
-  const hashedpass = await bcrypt.hash(password, 10);
+  // Hash password
+  const hashedPass = await bcrypt.hash(password, 10);
 
+  // Insert user with lowercase email
   const result = await pool.query(
     "INSERT INTO users (name, email, password, phone, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, phone, role",
-    [name, email, hashedpass, phone, role]
+    [name, email.toLowerCase(), hashedPass, phone, role]
   );
 
   return result.rows[0];
@@ -31,26 +34,21 @@ const signupUser = async (
 
 const loginUser = async (email: string, password: string) => {
   const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-    email,
+    email.toLowerCase(),
   ]);
 
   const user = result.rows[0];
-  if (!user) {
-    throw new Error("User not found");
-  }
+  if (!user) throw new Error("User not found");
 
   const match = await bcrypt.compare(password, user.password);
-  if (!match) {
-    throw new Error("Invalid password");
-  }
+  if (!match) throw new Error("Invalid password");
 
-  const secret = config.jwtSecret as string;
   const token = jwt.sign(
     { userId: user.id, role: user.role, email: user.email },
-    secret,
+    config.jwtSecret as string,
     { expiresIn: "9d" }
   );
-  console.log({ token });
+
   return {
     token,
     user: {
