@@ -1,0 +1,10 @@
+import express, { Request, Response } from "express";
+import { vehicalscontroller } from "./vehicals.controller";
+import auth from "../../middleware/auth";
+const router = express.Router();
+router.post("/", auth("admin"), vehicalscontroller.PostVehicals);
+router.get("/", vehicalscontroller.GetVehicals);
+router.get("/:vehiclesId", vehicalscontroller.GetSingleVehicals);
+router.put("/:vehiclesId", auth("admin"), vehicalscontroller.PutVehicals);
+router.delete("/:vehiclesId", auth("admin"), vehicalscontroller.DeletVehicals);
+export const vehicalsrouter = router;
