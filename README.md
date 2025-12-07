@@ -1,6 +1,6 @@
 # 🚗 Vehicle Rental System API
 
-[Live Demo](https://express-typescript-server-one.vercel.app/)
+[Live Demo](https://assignment-2-peach.vercel.app/)
 
 ---
 
