@@ -32,13 +32,11 @@ const PostVehicals = async (req: Request, res: Response) => {
       availability_status,
     });
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Vehicle created successfully",
-        data: result.rows[0],
-      });
+    res.status(201).json({
+      success: true,
+      message: "Vehicle created successfully",
+      data: result.rows[0],
+    });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -48,13 +46,11 @@ const PostVehicals = async (req: Request, res: Response) => {
 const GetVehicals = async (req: Request, res: Response) => {
   try {
     const result = await vehicleService.GetVehicles();
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Vehicles fetched successfully",
-        data: result.rows,
-      });
+    res.status(200).json({
+      success: true,
+      message: "Vehicles fetched successfully",
+      data: result.rows,
+    });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -75,13 +71,11 @@ const GetSingleVehicals = async (req: Request, res: Response) => {
         .status(404)
         .json({ success: false, message: "Vehicle not found" });
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Vehicle fetched successfully",
-        data: result.rows[0],
-      });
+    res.status(200).json({
+      success: true,
+      message: "Vehicle fetched successfully",
+      data: result.rows[0],
+    });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -117,13 +111,11 @@ const PutVehicals = async (req: Request, res: Response) => {
         .status(404)
         .json({ success: false, message: "Vehicle not found" });
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Vehicle updated successfully",
-        data: result.rows[0],
-      });
+    res.status(200).json({
+      success: true,
+      message: "Vehicle updated successfully",
+      data: result.rows[0],
+    });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -144,15 +136,13 @@ const DeletVehicals = async (req: Request, res: Response) => {
         .status(404)
         .json({ success: false, message: "Vehicle not found" });
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Vehicle deleted successfully",
-        data: result.rows[0],
-      });
+    res.status(200).json({
+      success: true,
+      message: "Vehicle deleted successfully",
+      data: result.rows[0],
+    });
   } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 

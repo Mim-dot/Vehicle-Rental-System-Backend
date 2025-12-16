@@ -6,9 +6,30 @@ const PostBook = async (
   rent_start_date: string,
   rent_end_date: string
 ) => {
+  const vehicle = await pool.query(`SELECT * FROM vehicles WHERE id = $1`, [
+    vehicle_id,
+  ]);
+  if (vehicle.rows.length === 0) throw new Error("Vehicle not found");
+
+  const dailyPrice = vehicle.rows[0].daily_rent_price;
+  const start = new Date(rent_start_date);
+  const end = new Date(rent_end_date);
+  const days = Math.ceil(
+    (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const total_price = days * dailyPrice;
+
   const result = await pool.query(
-    `SELECT daily_rent_price FROM vehicles WHERE id = $1`,
-    [vehicle_id]
+    `INSERT INTO bookings(customer_id,vehicle_id,rent_start_date,rent_end_date,total_price,status)
+     VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,
+    [
+      customer_id,
+      vehicle_id,
+      rent_start_date,
+      rent_end_date,
+      total_price,
+      "active",
+    ]
   );
 
   return result;

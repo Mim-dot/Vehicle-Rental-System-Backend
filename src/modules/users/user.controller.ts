@@ -20,7 +20,7 @@ const createUser = async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.log("CREATE USER ERROR:", err);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: err.message || "Something went wrong!",
       details: err,
@@ -69,7 +69,7 @@ const GetSingleUser = async (req: Request, res: Response) => {
   }
 };
 const PutUser = async (req: Request, res: Response) => {
-  console.log("BODY:", req.body);
+  //console.log("BODY:", req.body);
   const { userId } = req.params;
   const { name, email, password, phone, role } = req.body;
 
@@ -103,8 +103,7 @@ const PutUser = async (req: Request, res: Response) => {
   }
 };
 const DeleteUser = async (req: Request, res: Response) => {
-  const { userId } = req.params;
-
+  const userId = Number(req.params.userId);
   try {
     const result = await userService.DeleteUser(userId);
 

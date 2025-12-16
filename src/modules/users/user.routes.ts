@@ -5,8 +5,6 @@ import auth from "../../middleware/auth";
 import logger from "../../middleware/logger";
 
 const router = express.Router();
-// Create user (registration) - should be public, but usually handled in auth, not here
-// router.post("/", userControllers.createUser); // If needed, keep for admin creation
 
 // Get all users (admin only)
 router.get("/", logger, auth("admin"), userControllers.getUser);

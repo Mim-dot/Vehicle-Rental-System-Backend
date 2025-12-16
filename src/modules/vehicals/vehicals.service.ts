@@ -60,6 +60,14 @@ const PutVehicle = async (vehicleId: number, vehicle: Partial<Vehicle>) => {
 };
 
 const DeleteVehicle = async (vehicleId: number) => {
+  // Check if vehicle has active bookings
+  const activeBookings = await pool.query(
+    `SELECT * FROM bookings WHERE vehicle_id = $1 AND status='active'`,
+    [vehicleId]
+  );
+  if (activeBookings.rows.length > 0)
+    throw new Error("Cannot delete vehicle with active bookings");
+
   const result = await pool.query(
     `DELETE FROM vehicles WHERE id = $1 RETURNING *`,
     [vehicleId]

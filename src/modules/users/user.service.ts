@@ -56,13 +56,24 @@ const PutUser = async (
         updated_at = NOW()
       WHERE id = $6
       RETURNING *`,
-    [name, email, hashedPass, phone, role, userId]
+    [name, email?.toLowerCase(), hashedPass, phone, role, userId]
   );
   return result;
 };
 
-const DeleteUser = async (userId: any) => {
-  const result = await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
+const DeleteUser = async (userId: number) => {
+  const activeBookings = await pool.query(
+    `SELECT * FROM bookings WHERE customer_id = $1 AND status = 'active'`,
+    [userId]
+  );
+
+  if (activeBookings.rows.length > 0)
+    throw new Error("Cannot delete user with active bookings");
+
+  const result = await pool.query(
+    `DELETE FROM users WHERE id = $1 RETURNING *`,
+    [userId]
+  );
   return result;
 };
 export const userService = {
