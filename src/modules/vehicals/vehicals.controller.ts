@@ -46,9 +46,16 @@ const PostVehicals = async (req: Request, res: Response) => {
 const GetVehicals = async (req: Request, res: Response) => {
   try {
     const result = await vehicleService.GetVehicles();
+    if (result.rows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No vehicles found",
+        data: [],
+      });
+    }
     res.status(200).json({
       success: true,
-      message: "Vehicles fetched successfully",
+      message: "Vehicles retrieved successfully",
       data: result.rows,
     });
   } catch (err: any) {
@@ -56,9 +63,9 @@ const GetVehicals = async (req: Request, res: Response) => {
   }
 };
 
-// GET /vehicles/:vehiclesId
+// GET /vehicles/:vehicleId
 const GetSingleVehicals = async (req: Request, res: Response) => {
-  const vehicleId = Number(req.params.vehiclesId);
+  const vehicleId = Number(req.params.vehicleId);
   if (isNaN(vehicleId))
     return res
       .status(400)
@@ -73,7 +80,7 @@ const GetSingleVehicals = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      message: "Vehicle fetched successfully",
+      message: "Vehicle retrieved successfully",
       data: result.rows[0],
     });
   } catch (err: any) {
@@ -81,9 +88,9 @@ const GetSingleVehicals = async (req: Request, res: Response) => {
   }
 };
 
-// PUT /vehicles/:vehiclesId
+// PUT /vehicles/:vehicleId
 const PutVehicals = async (req: Request, res: Response) => {
-  const vehicleId = Number(req.params.vehiclesId);
+  const vehicleId = Number(req.params.vehicleId);
   if (isNaN(vehicleId))
     return res
       .status(400)
@@ -121,9 +128,9 @@ const PutVehicals = async (req: Request, res: Response) => {
   }
 };
 
-// DELETE /vehicles/:vehiclesId
+// DELETE /vehicles/:vehicleId
 const DeletVehicals = async (req: Request, res: Response) => {
-  const vehicleId = Number(req.params.vehiclesId);
+  const vehicleId = Number(req.params.vehicleId);
   if (isNaN(vehicleId))
     return res
       .status(400)

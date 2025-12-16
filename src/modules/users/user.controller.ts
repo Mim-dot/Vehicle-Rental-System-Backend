@@ -2,47 +2,28 @@ import { Request, Response } from "express";
 import { pool } from "../../config/db";
 import { userService } from "./user.service";
 
-const createUser = async (req: Request, res: Response) => {
-  const { name, email, password, phone, role } = req.body;
-  try {
-    const result = await userService.PostAllUsers(
-      name,
-      email,
-      password,
-      phone,
-      role
-    );
-    //console.log(result);
-    res.status(201).json({
-      success: true,
-      message: "Data Instered",
-      data: result.rows[0],
-    });
-  } catch (err: any) {
-    console.log("CREATE USER ERROR:", err);
-    res.status(400).json({
-      success: false,
-      message: err.message || "Something went wrong!",
-      details: err,
-    });
-  }
-};
 const getUser = async (req: Request, res: Response) => {
   try {
     const result = await userService.GetUser();
     res.status(200).json({
       success: true,
-      message: "Users recived successfully",
-      data: result.rows,
+      message: "Users retrieved successfully",
+      data: result.rows.map((user) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      })),
     });
   } catch (err: any) {
     res.status(500).json({
       success: false,
       message: err.message,
-      details: err,
     });
   }
 };
+
 const GetSingleUser = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
@@ -52,15 +33,22 @@ const GetSingleUser = async (req: Request, res: Response) => {
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "User not Found",
-      });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "Fetch successfully",
-        data: result.rows[0],
+        message: "User not found",
       });
     }
+
+    const user = result.rows[0];
+    res.status(200).json({
+      success: true,
+      message: "User retrieved successfully",
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -68,72 +56,94 @@ const GetSingleUser = async (req: Request, res: Response) => {
     });
   }
 };
+
 const PutUser = async (req: Request, res: Response) => {
-  //console.log("BODY:", req.body);
   const { userId } = req.params;
-  const { name, email, password, phone, role } = req.body;
+  const { name, email, phone, role } = req.body;
+  const currentUser = (req as any).user;
 
   try {
+    // Check authorization: customer can only update their own profile
+    if (
+      currentUser.role === "customer" &&
+      Number(userId) !== currentUser.userId
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You can only update your own profile",
+      });
+    }
+
+    // Check if user exists
+    const existingUser = await userService.GetSingleUser(userId);
+    if (existingUser.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     const result = await userService.PutUser(
-      name,
-      email,
-      password,
-      phone,
-      role,
+      name || existingUser.rows[0].name,
+      email || existingUser.rows[0].email,
+      undefined, // Don't update password through this endpoint
+      phone || existingUser.rows[0].phone,
+      role || existingUser.rows[0].role,
       userId
     );
+
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "User not Found",
-      });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "Updated successfully",
-        data: result.rows[0],
+        message: "User not found",
       });
     }
+
+    const updatedUser = result.rows[0];
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        role: updatedUser.role,
+      },
+    });
   } catch (err: any) {
-    console.log("UPDATE ERROR:", err);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: err.message,
     });
   }
 };
+
 const DeleteUser = async (req: Request, res: Response) => {
   const userId = Number(req.params.userId);
   try {
     const result = await userService.DeleteUser(userId);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount === 0 || result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "User not Found",
-      });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "user delete successfully",
-        data: result.rows,
+        message: "User not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: "Fetch successfully",
-      data: result.rows[0],
+      message: "User deleted successfully",
     });
   } catch (err: any) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: err.message,
     });
   }
 };
+
 export const userControllers = {
-  createUser,
   getUser,
   GetSingleUser,
   PutUser,

@@ -1,5 +1,6 @@
 import { pool } from "../../config/db";
 import bcrypt from "bcryptjs";
+
 const PostAllUsers = async (
   name: string,
   email: string,
@@ -7,17 +8,22 @@ const PostAllUsers = async (
   phone: string,
   role: string
 ) => {
-  // 1️⃣ Reject uppercase emails
-  if (/[A-Z]/.test(email)) {
-    throw new Error("Email must be lowercase only");
+  // Check duplicate email
+  const existingUser = await pool.query(
+    "SELECT * FROM users WHERE email = $1",
+    [email.toLowerCase()]
+  );
+
+  if (existingUser.rows.length > 0) {
+    throw new Error("Email already registered");
   }
 
-  // 2️⃣ Hash password
+  // Hash password
   const hashedPass = await bcrypt.hash(password, 10);
 
-  // 3️⃣ Insert user with lowercase email
+  // Insert user with lowercase email
   const result = await pool.query(
-    `INSERT INTO users(name, email, password, phone, role) VALUES($1,$2,$3,$4,$5) RETURNING *`,
+    `INSERT INTO users(name, email, password, phone, role) VALUES($1,$2,$3,$4,$5) RETURNING id, name, email, phone, role`,
     [name, email.toLowerCase(), hashedPass, phone, role]
   );
 
@@ -25,15 +31,20 @@ const PostAllUsers = async (
 };
 
 const GetUser = async () => {
-  const result = await pool.query(`SELECT * FROM users`);
+  const result = await pool.query(
+    `SELECT id, name, email, phone, role FROM users`
+  );
   return result;
 };
+
 const GetSingleUser = async (userId: any) => {
-  const result = await pool.query(`SELECT * FROM users WHERE id = $1`, [
-    userId,
-  ]);
+  const result = await pool.query(
+    `SELECT id, name, email, phone, role FROM users WHERE id = $1`,
+    [userId]
+  );
   return result;
 };
+
 const PutUser = async (
   name: any,
   email: any,
@@ -42,22 +53,17 @@ const PutUser = async (
   role: any,
   userId: any
 ) => {
-  let hashedPass = password;
+  let updateQuery = `UPDATE users SET name = $1, email = $2, phone = $3, role = $4, updated_at = NOW() WHERE id = $5 RETURNING id, name, email, phone, role`;
+  let params = [name, email?.toLowerCase(), phone, role, userId];
+
+  // Only update password if provided
   if (password) {
-    hashedPass = await bcrypt.hash(password, 10);
+    const hashedPass = await bcrypt.hash(password, 10);
+    updateQuery = `UPDATE users SET name = $1, email = $2, password = $3, phone = $4, role = $5, updated_at = NOW() WHERE id = $6 RETURNING id, name, email, phone, role`;
+    params = [name, email?.toLowerCase(), hashedPass, phone, role, userId];
   }
-  const result = await pool.query(
-    `UPDATE users SET  
-        name = $1,
-        email = $2,
-        password = $3,
-        phone = $4,
-        role = $5,
-        updated_at = NOW()
-      WHERE id = $6
-      RETURNING *`,
-    [name, email?.toLowerCase(), hashedPass, phone, role, userId]
-  );
+
+  const result = await pool.query(updateQuery, params);
   return result;
 };
 
@@ -67,15 +73,17 @@ const DeleteUser = async (userId: number) => {
     [userId]
   );
 
-  if (activeBookings.rows.length > 0)
+  if (activeBookings.rows.length > 0) {
     throw new Error("Cannot delete user with active bookings");
+  }
 
   const result = await pool.query(
-    `DELETE FROM users WHERE id = $1 RETURNING *`,
+    `DELETE FROM users WHERE id = $1 RETURNING id`,
     [userId]
   );
   return result;
 };
+
 export const userService = {
   PostAllUsers,
   GetSingleUser,
